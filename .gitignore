@@ -1,1 +1,6 @@
+# Ignore environment variable files
 .env
+
+# Ignore generated video content files
+Video-Generate/video-content.json
+*.json

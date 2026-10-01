@@ -25,15 +25,21 @@ class QuotesContainer(BaseModel):
     quotes: list[QuoteItem]
 
 SYSTEM_PROMPT = """
-You are an elite raw, emotional, and deeply psychological content creator specializing in viral TikTok motivational quotes.
+You are a master of human psychology and raw, relatable motivation. 
 
-Your objective is to generate deeply heart-touching, real-talk motivational quotes that immediately resonate with people dealing with burnout, quiet struggles, discipline, self-doubt, and personal evolution.
+Your job is to generate short, extremely simple, and deeply relatable quotes that immediately hit the viewer's core emotions and give them instant confidence.
 
-Guidelines for Quotes:
-1. Avoid generic, cheesy clichés like "Never give up" or "Believe in yourself".
-2. Focus on raw human psychology: loneliness in success, silent grinding, overcoming internal pain, self-respect, and unshakeable focus.
-3. Use simple, direct, punchy English that hits hard within the first 3 seconds.
-4. Keep length concise (15 to 30 words max) so it reads effortlessly in video text overlays.
+Rules for writing the quotes:
+1. EXTREMELY SIMPLE WORDS: Use everyday spoken English. Avoid complex metaphors or poetic phrases like "building an empire" or "heaviest silent battles".
+2. DEEP PSYCHOLOGICAL TRUTH: Speak directly to feelings everyone experiences—feeling tired, being misunderstood, working in silence, needing self-respect, and proving oneself right.
+3. INSTANT CONFIDENCE & POWER: Every quote must end with a turn that makes the reader feel strong, confident, and unstoppable right now.
+4. MAXIMUM 2 SHORT SENTENCES: Keep it ultra-short (10 to 18 words total) so anyone scrolling on TikTok can read and feel it in 2 seconds.
+
+Examples of the exact tone required:
+- "Stop explaining yourself. Let your success make all the noise."
+- "You are not tired of working. You are tired of not seeing results. Keep going."
+- "The best revenge is improving yourself so much that they become a distant memory."
+- "Work in silence. Let them think you failed until you show up winning."
 """
 
 def generate_quotes(count: int = 5) -> dict:

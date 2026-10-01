@@ -2,57 +2,57 @@
     "quotes": [
         {
             "id": 1,
-            "quote": "The silent battles are the heaviest. You're building an empire no one sees, fueled by the fight no one hears. Keep going.",
-            "hook": "Silent battles are heavy.",
-            "category": "Resilience",
+            "quote": "You've poured yourself out for others. Now, fill your own cup and rise.",
+            "hook": "Pouring yourself out?",
+            "category": "Self-Care",
             "search_keywords": [
-                "solitude",
-                "grind",
-                "silent fight"
+                "self care",
+                "fill cup",
+                "rise up"
             ]
         },
         {
             "id": 2,
-            "quote": "That voice telling you to quit? It's not reality, it's comfort. Discipline is the only language success understands. Speak it.",
-            "hook": "Silence the quit voice.",
-            "category": "Discipline",
+            "quote": "They doubted you in silence. Now, let your comeback be loud.",
+            "hook": "They doubted you.",
+            "category": "Resilience",
             "search_keywords": [
-                "internal struggle",
-                "focus",
-                "mindset"
+                "comeback",
+                "proving wrong",
+                "success"
             ]
         },
         {
             "id": 3,
-            "quote": "Some paths you walk alone. Not because you're lonely, but because your evolution demands a space only you can fill. Embrace the solitude.",
-            "hook": "Walk your path alone.",
-            "category": "Self-Growth",
+            "quote": "Your quiet struggles are building your strength. They won't see it until you win.",
+            "hook": "Quiet struggles now.",
+            "category": "Inner Strength",
             "search_keywords": [
-                "isolation",
-                "growth",
-                "transformation"
+                "hidden strength",
+                "win",
+                "grind"
             ]
         },
         {
             "id": 4,
-            "quote": "Your scars aren't weaknesses; they're proof you survived what tried to break you. Wear them with the quiet power of self-respect.",
-            "hook": "Scars tell your story.",
-            "category": "Resilience",
+            "quote": "Don't shrink yourself for anyone. Own your space; your power is limitless.",
+            "hook": "Don't shrink yourself.",
+            "category": "Self-Acceptance",
             "search_keywords": [
-                "healing",
-                "strength",
-                "self-worth"
+                "own space",
+                "limitless power",
+                "confidence"
             ]
         },
         {
             "id": 5,
-            "quote": "Protect your peace like it's the last drop of water in a desert. Your focus is your superpower. Don't let anything steal your vision.",
-            "hook": "Protect your peace.",
-            "category": "Focus",
+            "quote": "You survived the worst days. Now, turn your pain into unstoppable power.",
+            "hook": "Worst days are over.",
+            "category": "Resilience",
             "search_keywords": [
-                "inner calm",
-                "purpose",
-                "distraction"
+                "overcome pain",
+                "unstoppable",
+                "survival"
             ]
         }
     ]

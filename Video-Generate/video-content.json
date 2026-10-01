@@ -1,0 +1,59 @@
+{
+    "quotes": [
+        {
+            "id": 1,
+            "quote": "The silent battles are the heaviest. You're building an empire no one sees, fueled by the fight no one hears. Keep going.",
+            "hook": "Silent battles are heavy.",
+            "category": "Resilience",
+            "search_keywords": [
+                "solitude",
+                "grind",
+                "silent fight"
+            ]
+        },
+        {
+            "id": 2,
+            "quote": "That voice telling you to quit? It's not reality, it's comfort. Discipline is the only language success understands. Speak it.",
+            "hook": "Silence the quit voice.",
+            "category": "Discipline",
+            "search_keywords": [
+                "internal struggle",
+                "focus",
+                "mindset"
+            ]
+        },
+        {
+            "id": 3,
+            "quote": "Some paths you walk alone. Not because you're lonely, but because your evolution demands a space only you can fill. Embrace the solitude.",
+            "hook": "Walk your path alone.",
+            "category": "Self-Growth",
+            "search_keywords": [
+                "isolation",
+                "growth",
+                "transformation"
+            ]
+        },
+        {
+            "id": 4,
+            "quote": "Your scars aren't weaknesses; they're proof you survived what tried to break you. Wear them with the quiet power of self-respect.",
+            "hook": "Scars tell your story.",
+            "category": "Resilience",
+            "search_keywords": [
+                "healing",
+                "strength",
+                "self-worth"
+            ]
+        },
+        {
+            "id": 5,
+            "quote": "Protect your peace like it's the last drop of water in a desert. Your focus is your superpower. Don't let anything steal your vision.",
+            "hook": "Protect your peace.",
+            "category": "Focus",
+            "search_keywords": [
+                "inner calm",
+                "purpose",
+                "distraction"
+            ]
+        }
+    ]
+}

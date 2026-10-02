@@ -8,10 +8,8 @@ from pydantic import BaseModel, Field
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize client (it will now correctly pick up GEMINI_API_KEY from environment)
+# Initialize client
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
-# Rest of your code remains the same...
 
 # Define Structured Schema
 class QuoteItem(BaseModel):
@@ -19,7 +17,9 @@ class QuoteItem(BaseModel):
     quote: str = Field(description="A powerful, emotional, heart-touching motivational quote.")
     hook: str = Field(description="A 3-5 word high-impact opening line to hook the viewer on TikTok.")
     category: str = Field(description="The theme of the quote (e.g., Resilience, Discipline, Self-Growth, Heartbreak).")
-    search_keywords: list[str] = Field(description="3 key search terms to find matching background videos/music.")
+    search_keyword: str = Field(
+        description="Exactly ONE single, highly specific 2-3 word search query for downloading the perfect aesthetic video background (e.g., 'dark gym motivation', 'night city drive', 'lone wolf aesthetic')."
+    )
 
 class QuotesContainer(BaseModel):
     quotes: list[QuoteItem]
@@ -33,7 +33,8 @@ Rules for writing the quotes:
 1. EXTREMELY SIMPLE WORDS: Use everyday spoken English. Avoid complex metaphors or poetic phrases like "building an empire" or "heaviest silent battles".
 2. DEEP PSYCHOLOGICAL TRUTH: Speak directly to feelings everyone experiences—feeling tired, being misunderstood, working in silence, needing self-respect, and proving oneself right.
 3. INSTANT CONFIDENCE & POWER: Every quote must end with a turn that makes the reader feel strong, confident, and unstoppable right now.
-4. MAXIMUM 2 SHORT SENTENCES: Keep it ultra-short (10 to 18 words total) so anyone scrolling on TikTok can read and feel it in 2 seconds.
+4. MAXIMUM 2 SHORT SENTENCES: Keep it ultra-short (10 to 25 words total) so anyone scrolling on TikTok can read and feel it in 2 seconds.
+5. SINGLE PERFECT SEARCH KEYWORD: For `search_keyword`, output EXACTLY ONE ultra-focused query (2-3 words) to search on Pinterest for vertical video backgrounds. (Examples: "dark gym motivation", "night drive aesthetic", "rainy city night", "lone wolf walk").
 
 Examples of the exact tone required:
 - "Stop explaining yourself. Let your success make all the noise."
@@ -46,7 +47,7 @@ def generate_quotes(count: int = 5) -> dict:
     prompt = f"Generate {count} unique, deeply moving, and raw heart-touching motivational quotes."
     
     response = client.models.generate_content(
-        model="gemini-2.5-flash",  # Recommended active Flash model tier
+        model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
@@ -61,7 +62,6 @@ def generate_quotes(count: int = 5) -> dict:
     return data
 
 def save_to_json(data: dict, filename: str = "video-content.json") -> None:
-    # Read existing data if file exists and is not empty, then append or overwrite
     output_path = os.path.join(os.path.dirname(__file__), filename)
     
     with open(output_path, "w", encoding="utf-8") as f:

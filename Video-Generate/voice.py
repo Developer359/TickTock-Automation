@@ -1,55 +1,57 @@
 import os
-from elevenlabs.client import ElevenLabs
-from elevenlabs.core import ApiError
+import requests
+from dotenv import load_dotenv
+
+# Load environment variables from the root .env file
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../.env"))
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../Video-Data/Voiceovers"))
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+# Pulls FISH_API_KEY securely from your .env file
+FISH_API_KEY = os.getenv("FISH_API_KEY")
 
-# George Voice ID
-CLONED_VOICE_ID = "LcVcltBiweqv2E4ipKan"
+# Voice Model ID for "Commanding Male Motivator"
+REFERENCE_ID = "01b443ee064347eda7bb83feb923226d"
 
-client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
-
-# 💡 Formatting: ALL CAPS + [shouts] + ALL EXCLAMATION MARKS
 MOTIVATIONAL_PROMPT = (
-    "[shouts at the top of his lungs, screaming violently] "
-    "LISTEN TO ME!!! WAKE UP!!! "
-    "YOU ARE STANDING RIGHT ON THE EDGE OF GREATNESS BUT YOU ARE LETTING COMFORT DESTROY YOUR FUTURE!!! "
-    "[screaming in pure rage] CHOOSE RIGHT NOW!!! "
-    "ARE YOU GOING TO FOLD LIKE PAPER OR ARE YOU GOING TO STAND UP AND FIGHT FOR YOUR LIFE!!! "
-    "IT IS TIME TO RUN!!! IT IS TIME TO WORK!!! YOU CAN DO IT!!! GET UP AND PROVE THEM WRONG!!!"
+    "Wake up! You are standing right on the edge of greatness, "
+    "but you are letting comfort destroy your future! Choose right now! "
+    "Are you going to fold like paper, or are you going to stand up and fight for your life? "
+    "It is time to run and work! You can do it!"
 )
 
-OUTPUT_FILE = os.path.join(OUTPUT_DIR, "elevenlabs_intense_quote.mp3")
+OUTPUT_FILE = os.path.join(OUTPUT_DIR, "fishaudio_intense_quote.mp3")
 
-def generate_intense_voiceover():
-    print("Generating max-intensity screaming voiceover...")
+def generate_voiceover():
+    if not FISH_API_KEY:
+        print("Error: FISH_API_KEY not found in environment variables or .env file.")
+        return
+
+    url = "https://api.fish.audio/v1/tts"
     
-    try:
-        audio_stream = client.text_to_speech.convert(
-            voice_id=CLONED_VOICE_ID,
-            text=MOTIVATIONAL_PROMPT,
-            model_id="eleven_v3",  # 👈 Switch to eleven_v3 for true emotion/screaming support
-            voice_settings={
-                "stability": 0.15,        # 👈 Lower stability forces high emotional volatility & vocal cracking
-                "similarity_boost": 0.75,
-                "style": 1.0,             # 👈 Max style exaggeration for raw delivery
-                "use_speaker_boost": True
-            }
-        )
+    headers = {
+        "Authorization": f"Bearer {FISH_API_KEY}",
+        "Content-Type": "application/json",
+        "model": "s2.1-pro-free"
+    }
+    
+    payload = {
+        "text": MOTIVATIONAL_PROMPT,
+        "reference_id": REFERENCE_ID,
+        "format": "mp3"
+    }
 
+    print("Generating voiceover via Fish Audio (s2.1-pro-free)...")
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code == 200:
         with open(OUTPUT_FILE, "wb") as f:
-            for chunk in audio_stream:
-                if chunk:
-                    f.write(chunk)
-
-        print(f"✓ Audio generated: {OUTPUT_FILE}")
-
-    except ApiError as e:
-        print(f"Error details: {e.body}")
+            f.write(response.content)
+        print(f"✓ Saved successfully: {OUTPUT_FILE}")
+    else:
+        print(f"Error {response.status_code}: {response.text}")
 
 if __name__ == "__main__":
-    generate_intense_voiceover()
+    generate_voiceover()

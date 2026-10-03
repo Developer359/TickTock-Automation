@@ -61,7 +61,7 @@ def generate_quotes(count: int = 5) -> dict:
     data = json.loads(response.text)
     return data
 
-def save_to_json(data: dict, filename: str = "video-content.json") -> None:
+def save_to_json(data: dict, filename: str = "../Video-Data/video-content.json") -> None:
     output_path = os.path.join(os.path.dirname(__file__), filename)
     
     with open(output_path, "w", encoding="utf-8") as f:

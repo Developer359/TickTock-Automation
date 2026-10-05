@@ -48,7 +48,7 @@ Your ONLY job is to generate 3 quotes — one for each highly specific category:
    - Example tone: "Failure isn't the end; it's the cost of entry. Every time you fell, you bought a lesson. Success isn't easy, but quitting guarantees you'll never see it. Keep going."
 
 STRICT RULES for every quote:
-1. MAX 35 WORDS: Must be short enough to speak aloud in under 20 seconds. 
+1. MAX 40 WORDS: Must be short enough to speak aloud in under 20 seconds. 
 2. EXTREMELY SIMPLE ENGLISH: Use only the most basic, everyday words. No fancy words, no complex metaphors. A 10-year-old must understand every word instantly.
 3. START AND END WITH COMMANDS: Every quote MUST start with a short motivational command (like "Wake up!", "Listen!", "Don't stop!"). It MUST end with an encouraging phrase for the audience like "Just do it!", "Keep going!", "You can do it!", or "Forget the past, move forward!".
 4. COMMAND TONE: Use "YOU", "YOUR". Make it loud, commanding, and intense for a voiceover.

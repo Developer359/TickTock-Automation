@@ -1,6 +1,5 @@
 import os
 import subprocess
-import json
 import sys
 
 # Fix Windows console encoding for emoji output

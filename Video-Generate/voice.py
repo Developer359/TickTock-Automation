@@ -19,7 +19,7 @@ MOTIVATIONAL_PROMPT = (
     "Wake up! You are standing right on the edge of greatness, "
     "but you are letting comfort destroy your future! Choose right now! "
     "Are you going to fold like paper, or are you going to stand up and fight for your life? "
-    "It is time to run and work! You can do it!"
+    "It is time to run and work! You can do it! You are a champion! You are a warrior! You are a conqueror! "
 )
 
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "fishaudio_intense_quote.mp3")

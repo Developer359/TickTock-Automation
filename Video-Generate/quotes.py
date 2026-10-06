@@ -57,6 +57,32 @@ STRICT RULES for every quote:
 Generate exactly 3 quotes, one per category.
 """
 
+# ---------------------------------------------------------------
+# Eddit-data directory (sibling of Video-Generate)
+# ---------------------------------------------------------------
+EDDIT_DATA_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "Eddit-data"
+)
+
+# Mapping: substring of quote category (lowercased) → JSON filename in Eddit-data
+CATEGORY_FILE_MAP = {
+    "wake-up":  "gym-video.json",      # "The Wake-Up Call"
+    "mindset":  "mindset-video.json",  # "Mindset"
+    "hardwork": "hardwork-video.json", # "Hardwork"
+}
+
+def get_target_json(category: str) -> str:
+    """Return the absolute path of the Eddit-data JSON for a given quote category."""
+    cat_lower = category.lower()
+    for keyword, filename in CATEGORY_FILE_MAP.items():
+        if keyword in cat_lower:
+            return os.path.join(EDDIT_DATA_DIR, filename)
+    # Fallback: sanitise category name into a filename
+    safe = cat_lower.replace(" ", "-").replace("&", "").replace("--", "-").strip("-")
+    return os.path.join(EDDIT_DATA_DIR, f"{safe}-video.json")
+
+
 def generate_quotes() -> dict:
     prompt = """Generate exactly 3 motivational quotes — one per category:
 1. The Wake-Up Call (Intense, loud, don't quit, fight for your future - NO gym words)
@@ -83,34 +109,41 @@ Each quote must be under 40 words, commanding, simple, and deeply motivating.
 
 
 def save_to_json(data: dict) -> None:
-    output_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "Video-Data",
-        "video-content.json"
-    )
+    """
+    Save each quote into its own Eddit-data JSON file.
+    Only the quote fields are stored here; voice_path and bg_video
+    will be filled in by voice.py and video.py respectively.
+    """
+    quotes = data.get("quotes", [])
 
-    # Load existing content so we preserve bg_music and bg_video keys
-    existing = {}
-    if os.path.exists(output_path):
-        with open(output_path, "r", encoding="utf-8") as f:
-            try:
-                existing = json.load(f)
-            except json.JSONDecodeError:
-                existing = {}
+    for q in quotes:
+        target_path = get_target_json(q.get("category", ""))
 
-    # Only update the quotes section
-    existing["quotes"] = data.get("quotes", [])
+        # Load existing file to preserve any other keys already set
+        existing = {}
+        if os.path.exists(target_path) and os.path.getsize(target_path) > 0:
+            with open(target_path, "r", encoding="utf-8") as f:
+                try:
+                    existing = json.load(f)
+                except json.JSONDecodeError:
+                    existing = {}
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(existing, f, indent=4, ensure_ascii=False)
+        # Update quote fields only; clear stale voice/video paths
+        existing["id"]             = q.get("id")
+        existing["quote"]          = q.get("quote", "")
+        existing["hook"]           = q.get("hook", "")
+        existing["category"]       = q.get("category", "")
+        existing["search_keyword"] = q.get("search_keyword", "")
+        existing.pop("voice_path", None)
+        existing.pop("bg_video",   None)
 
-    print(f"[OK] Successfully generated and saved {len(existing['quotes'])} quotes to:")
-    print(f"   {output_path}")
-    print()
-    for q in existing["quotes"]:
-        print(f"  [{q['category']}]")
-        print(f"  Hook: {q['hook']}")
-        print(f"  Quote: {q['quote']}")
+        with open(target_path, "w", encoding="utf-8") as f:
+            json.dump(existing, f, indent=4, ensure_ascii=False)
+
+        print(f"[OK] Saved → {os.path.basename(target_path)}")
+        print(f"     [{q['category']}]")
+        print(f"     Hook:  {q['hook']}")
+        print(f"     Quote: {q['quote']}")
         print()
 
 

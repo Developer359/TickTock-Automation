@@ -7,11 +7,19 @@ from dotenv import load_dotenv
 # Load environment variables from the root .env file
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../.env"))
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../Video-Data/Voiceovers"))
+SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_DIR  = os.path.abspath(os.path.join(SCRIPT_DIR, "../Video-Data/Voiceovers"))
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-CONTENT_JSON_PATH = os.path.join(SCRIPT_DIR, "../Video-Data/video-content.json")
+# Eddit-data directory that quotes.py writes into
+EDDIT_DATA_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../Eddit-data"))
+
+# All three per-category JSON files (order doesn't matter)
+EDDIT_JSON_FILES = [
+    os.path.join(EDDIT_DATA_DIR, "gym-video.json"),
+    os.path.join(EDDIT_DATA_DIR, "mindset-video.json"),
+    os.path.join(EDDIT_DATA_DIR, "hardwork-video.json"),
+]
 
 # Pulls FISH_API_KEY securely from your .env file
 FISH_API_KEY = os.getenv("FISH_API_KEY")
@@ -31,18 +39,6 @@ def generate_voiceovers():
         print("Error: FISH_API_KEY not found in environment variables or .env file.")
         return
 
-    if not os.path.exists(CONTENT_JSON_PATH):
-        print(f"Error: {CONTENT_JSON_PATH} not found. Please run quotes.py first.")
-        return
-
-    with open(CONTENT_JSON_PATH, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    quotes = data.get("quotes", [])
-    if not quotes:
-        print("No quotes found in video-content.json")
-        return
-
     url = "https://api.fish.audio/v1/tts"
     headers = {
         "Authorization": f"Bearer {FISH_API_KEY}",
@@ -50,14 +46,26 @@ def generate_voiceovers():
         "model": "s2.1-pro-free"
     }
 
-    for quote_item in quotes:
-        category = quote_item.get("category", "Uncategorized")
-        text = quote_item.get("quote", "")
-        
-        if not text:
+    for json_path in EDDIT_JSON_FILES:
+        if not os.path.exists(json_path) or os.path.getsize(json_path) == 0:
+            print(f"[SKIP] {os.path.basename(json_path)} — not found or empty (run quotes.py first)")
             continue
 
-        filename = f"{sanitize_filename(category)}_audio.mp3"
+        with open(json_path, "r", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                print(f"[SKIP] {os.path.basename(json_path)} — invalid JSON")
+                continue
+
+        category = data.get("category", "Uncategorized")
+        text     = data.get("quote", "")
+
+        if not text:
+            print(f"[SKIP] {os.path.basename(json_path)} — no quote text found")
+            continue
+
+        filename    = f"{sanitize_filename(category)}_audio.mp3"
         output_file = os.path.join(OUTPUT_DIR, filename)
 
         payload = {
@@ -66,15 +74,25 @@ def generate_voiceovers():
             "format": "mp3"
         }
 
-        print(f"Generating voiceover for category '{category}'...")
+        print(f"Generating voiceover for '{category}'...")
         response = requests.post(url, json=payload, headers=headers)
 
         if response.status_code == 200:
             with open(output_file, "wb") as f:
                 f.write(response.content)
-            print(f"✓ Saved successfully: {output_file}")
+
+            # Normalise path separators
+            normalized_audio_path = output_file.replace("\\", "/")
+
+            # Write the audio path back into the same Eddit-data JSON
+            data["voice_path"] = normalized_audio_path
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4, ensure_ascii=False)
+
+            print(f"  ✓ Audio saved : {output_file}")
+            print(f"  ✓ JSON updated: {os.path.basename(json_path)}")
         else:
-            print(f"Error {response.status_code} for '{category}': {response.text}")
+            print(f"  ✗ Error {response.status_code} for '{category}': {response.text}")
 
 if __name__ == "__main__":
     generate_voiceovers()

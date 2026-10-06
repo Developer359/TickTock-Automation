@@ -3,69 +3,120 @@ import json
 import random
 import glob
 
-def attach_random_single_bg_video(
-    relative_json_path: str = "../Video-Data/video-content.json",
-    relative_videos_dir: str = "../Video-Data/Videos"
-) -> None:
-    # Resolve absolute paths relative to Video-Generate script location
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.abspath(os.path.join(script_dir, relative_json_path))
-    videos_dir = os.path.abspath(os.path.join(script_dir, relative_videos_dir))
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+SCRIPT_DIR     = os.path.dirname(os.path.abspath(__file__))
+VIDEOS_ROOT    = os.path.abspath(os.path.join(SCRIPT_DIR, "../Video-Data/Videos"))
+EDDIT_DATA_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "../Eddit-data"))
 
-    if not os.path.exists(videos_dir):
-        print(f"Error: Videos directory not found at '{videos_dir}'")
-        return
+# Map: video sub-folder name  →  Eddit-data JSON file
+FOLDER_JSON_MAP = {
+    "Gym":      "gym-video.json",
+    "Mindset":  "mindset-video.json",
+    "Hardwork": "hardwork-video.json",
+}
 
-    if not os.path.exists(json_path):
-        print(f"Error: JSON file not found at '{json_path}'")
-        return
+VIDEO_EXTENSIONS = ("*.mp4", "*.mov", "*.mkv", "*.webm")
 
-    # Find all videos inside Video-Data/Videos/
-    video_extensions = ("*.mp4", "*.mov", "*.mkv", "*.webm")
-    local_videos = []
-    
-    for ext in video_extensions:
-        local_videos.extend(glob.glob(os.path.join(videos_dir, ext)))
-        local_videos.extend(glob.glob(os.path.join(videos_dir, "**", ext), recursive=True))
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-    local_videos = sorted(list(set(local_videos)))
+def get_all_videos(folder: str) -> list[str]:
+    """Return a sorted list of all video files inside *folder* (non-recursive)."""
+    videos = []
+    for ext in VIDEO_EXTENSIONS:
+        videos.extend(glob.glob(os.path.join(folder, ext)))
+    return sorted(set(videos))
 
-    if not local_videos:
-        print(f"No video files found in '{videos_dir}'. Please add .mp4 files.")
-        return
 
-    # Load existing video-content.json
-    with open(json_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+def pick_strict_random(all_videos: list[str], used_videos: list[str]) -> tuple[str, list[str]]:
+    """
+    Pick one video that has NOT been used yet.
+    If every video has been used, reset the used list and start a fresh cycle.
+    Returns (selected_path, updated_used_list).
+    """
+    # Normalise all paths to forward-slash for consistent comparison
+    all_norm  = [v.replace("\\", "/") for v in all_videos]
+    used_norm = [v.replace("\\", "/") for v in used_videos]
 
-    # Clean up video_path from individual quotes if present
-    quotes = data.get("quotes", [])
-    for item in quotes:
-        if "video_path" in item:
-            del item["video_path"]
+    available = [v for v in all_norm if v not in used_norm]
 
-    # Remove bg_videos array if previously created
-    if "bg_videos" in data:
-        del data["bg_videos"]
+    if not available:
+        # All videos used — reset cycle
+        print("  [INFO] All videos used. Resetting rotation.")
+        used_norm = []
+        available = all_norm
 
-    # Randomly pick ONE video from the folder
-    selected_video = random.choice(local_videos)
-    normalized_path = os.path.abspath(selected_video).replace("\\", "/")
-    title = os.path.splitext(os.path.basename(selected_video))[0]
+    selected = random.choice(available)
+    used_norm.append(selected)
+    return selected, used_norm
 
-    # Store single chosen video under bg_video
-    data["bg_video"] = {
-        "title": title,
-        "file_path": normalized_path
-    }
 
-    print(f"Randomly selected video: {title}")
+def load_json(path: str) -> dict:
+    if os.path.exists(path) and os.path.getsize(path) > 0:
+        with open(path, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                pass
+    return {}
 
-    # Save updated JSON
-    with open(json_path, "w", encoding="utf-8") as f:
+
+def save_json(path: str, data: dict) -> None:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
-    print(f"Successfully updated 'bg_video' in: {json_path}")
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def attach_videos() -> None:
+    if not os.path.exists(VIDEOS_ROOT):
+        print(f"Error: Videos directory not found at '{VIDEOS_ROOT}'")
+        return
+
+    for folder_name, json_filename in FOLDER_JSON_MAP.items():
+        folder_path = os.path.join(VIDEOS_ROOT, folder_name)
+        json_path   = os.path.join(EDDIT_DATA_DIR, json_filename)
+
+        # ── 1. Gather all videos in this category folder ──────────────────
+        if not os.path.exists(folder_path):
+            print(f"[SKIP] Folder not found: {folder_path}")
+            continue
+
+        all_videos = get_all_videos(folder_path)
+        if not all_videos:
+            print(f"[SKIP] No video files found in '{folder_path}'")
+            continue
+
+        # ── 2. Load the Eddit-data JSON (may already have quote/voice data) ─
+        data = load_json(json_path)
+
+        # ── 3. Strict-random selection ─────────────────────────────────────
+        used_videos = data.get("used_videos", [])
+        selected, updated_used = pick_strict_random(all_videos, used_videos)
+
+        title = os.path.splitext(os.path.basename(selected))[0]
+
+        # ── 4. Write back ──────────────────────────────────────────────────
+        data["used_videos"] = updated_used
+        data["bg_video"] = {
+            "title":     title,
+            "file_path": selected   # already normalised to forward-slash
+        }
+
+        save_json(json_path, data)
+
+        remaining = len(all_videos) - len(updated_used)
+        print(f"[{folder_name}] Selected : {title}")
+        print(f"           JSON     : {json_filename}")
+        print(f"           Remaining: {remaining} video(s) before next reset")
+        print()
+
 
 if __name__ == "__main__":
-    attach_random_single_bg_video()
+    print("[*] Attaching background videos (strict random per category)...\n")
+    attach_videos()

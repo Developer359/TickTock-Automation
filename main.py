@@ -12,6 +12,8 @@ MAIN_VIDEO_DATA  = os.path.join(VIDEO_GENERATE, "main-video-data.py")
 MAIN_SUBTITLE    = os.path.join(VIDEO_EDDIT,    "main-subtitle.py")
 VIDEO_STORE      = os.path.join(ROOT_DIR, "Video-Store")
 STORE_VIDEOS     = os.path.join(VIDEO_STORE, "store_videos.py")
+METADATA_DIR     = os.path.join(ROOT_DIR, "Metadata")
+GEN_METADATA     = os.path.join(METADATA_DIR, "metadata.py")
 
 PYTHON = sys.executable   # same Python interpreter that launched this script
 
@@ -84,6 +86,11 @@ def main() -> None:
             "Video Storage    (store finalized videos)",
             STORE_VIDEOS,
         ),
+        (
+            4,
+            "Metadata         (viral titles & tags → JSON + Supabase)",
+            GEN_METADATA,
+        ),
     ]
 
     total_start = time.time()
@@ -97,6 +104,7 @@ def main() -> None:
     print("║        ✓  Full pipeline completed successfully!          ║")
     print(f"║        ⏱  Total time: {total_elapsed:.1f}s{' ' * (34 - len(f'{total_elapsed:.1f}'))}║")
     print("║        📁  Final videos are in  Final-Video/             ║")
+    print("║        🏷  Metadata & tags saved to  Metadata/            ║")
     print("╚══════════════════════════════════════════════════════════╝\n")
 
 

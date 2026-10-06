@@ -4,3 +4,8 @@
 # Ignore generated video content files
 Video-Generate/video-content.json
 *.json
+
+# Ignore generated output and data directories
+/Final-Video/
+/Output/
+/Eddit-data/

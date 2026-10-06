@@ -1,26 +1,3 @@
-"""
-main.py
-───────
-Master pipeline orchestrator for TickTock Automation.
-
-Runs ALL stages end-to-end in strict order:
-
-  STAGE 1 ─ Video-Generate/main-video-data.py
-             ├─ Step 1 · quotes.py   → generate motivational quotes
-             ├─ Step 2 · voice.py    → generate voiceovers
-             ├─ Step 3 · video.py    → select background videos
-             └─ Step 4 · music.py    → select background music
-
-  STAGE 2 ─ Video-Generate/Video-Eddit/main-subtitle.py
-             ├─ Step 1 · trim.py     → assemble raw video  →  Output/
-             └─ Step 2 · subtitle.py → burn subtitles      →  Final-Video/
-
-  STAGE 3 ─ Video-Store/store_videos.py
-             └─ Step 1 · store_videos.py → handle finalized videos
-
-Stops immediately with exit code 1 if any stage fails.
-"""
-
 import sys
 import time
 import os

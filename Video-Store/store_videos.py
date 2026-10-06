@@ -2,8 +2,11 @@ import os
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
-# Load environment variables from .env
-load_dotenv()
+# Resolve project root (one directory up from Video-Store)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Load environment variables from .env in project root
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -11,7 +14,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 # Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def upload_final_videos(folder_path: str = "Final-Video", bucket_name: str = "tiktok-videos"):
+def upload_final_videos(folder_path: str = os.path.join(PROJECT_ROOT, "Final-Video"), bucket_name: str = "tiktok-videos"):
     """
     Uploads all videos from Final-Video folder into the 'tiktok-videos' Supabase bucket.
     """

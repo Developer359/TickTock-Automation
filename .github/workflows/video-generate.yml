@@ -20,12 +20,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           # Dependencies analyzed from project files
-          pip install supabase python-dotenv requests imageio-ffmpeg moviepy google-genai pydantic
+          pip install supabase python-dotenv requests imageio-ffmpeg moviepy google-genai pydantic fish-audio-sdk
 
       - name: Run Main Script
         env:
           # Make sure to configure your GitHub repository secrets for these
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FISH_API_KEY: ${{ secrets.FISH_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |

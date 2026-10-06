@@ -14,3 +14,6 @@ Output/*
 
 Eddit-data/*
 !Eddit-data/.gitkeep
+
+Video-Data/Voiceovers/*
+!Video-Data/Voiceovers/.gitkeep

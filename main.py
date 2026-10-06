@@ -15,6 +15,9 @@ Runs ALL stages end-to-end in strict order:
              ├─ Step 1 · trim.py     → assemble raw video  →  Output/
              └─ Step 2 · subtitle.py → burn subtitles      →  Final-Video/
 
+  STAGE 3 ─ Video-Store/store_videos.py
+             └─ Step 1 · store_videos.py → handle finalized videos
+
 Stops immediately with exit code 1 if any stage fails.
 """
 
@@ -30,6 +33,8 @@ VIDEO_EDDIT      = os.path.join(VIDEO_GENERATE, "Video-Eddit")
 
 MAIN_VIDEO_DATA  = os.path.join(VIDEO_GENERATE, "main-video-data.py")
 MAIN_SUBTITLE    = os.path.join(VIDEO_EDDIT,    "main-subtitle.py")
+VIDEO_STORE      = os.path.join(ROOT_DIR, "Video-Store")
+STORE_VIDEOS     = os.path.join(VIDEO_STORE, "store_videos.py")
 
 PYTHON = sys.executable   # same Python interpreter that launched this script
 
@@ -96,6 +101,11 @@ def main() -> None:
             2,
             "Video Editing    (trim → subtitle burn-in)",
             MAIN_SUBTITLE,
+        ),
+        (
+            3,
+            "Video Storage    (store finalized videos)",
+            STORE_VIDEOS,
         ),
     ]
 

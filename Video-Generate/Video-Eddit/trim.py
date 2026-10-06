@@ -58,24 +58,12 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
     print(f"  📹  Video : {os.path.basename(video_path)}")
     print(f"  🎵  Music : {os.path.basename(music_path)}")
 
-    # ── 2. Build & run single ffmpeg command (UNCHANGED from trim.py) ─────────
-    # Everything in ONE pass:
-    #   input 0 = video (looped with -stream_loop)
-    #   input 1 = voiceover mp3
-    #   input 2 = background music (looped with -stream_loop)
-    #
-    # Filter graph:
-    #   - Strip original video audio (use only inputs 1 & 2 for audio)
-    #   - Delay voiceover by 0.2s
-    #   - Duck music to 12% volume
-    #   - Mix voice + music together (normalize=0 to prevent auto-quieting)
-    #   - Trim everything to target_duration
 
     filter_complex = (
         # Voiceover: delay 200ms, keep full volume
         "[1:a] adelay=200|200, volume=1.0 [voice]; "
-        # Music: duck to 15% volume
-        "[2:a] volume=0.15 [music]; "
+        # Music: duck to 10% volume
+        "[2:a] volume=0.010 [music]; "
         # Mix them together — normalize=0 prevents ffmpeg from halving volume
         "[voice][music] amix=inputs=2:duration=longest:normalize=0 [aout]"
     )

@@ -167,55 +167,53 @@ def merge_short_segments(segments: list, min_dur: float = 0.8) -> list:
 #  QUOTE CHUNKING — Map words → speech segments
 # ══════════════════════════════════════════════════════════════════════════════
 
-def split_quote_into_chunks(quote: str, num_chunks: int) -> list:
+def map_time_to_real_audio(t_speech: float, segments: list) -> float:
+    """Map a time offset within the concatenated speech back to real audio timestamps."""
+    accum = 0.0
+    for s, e in segments:
+        dur = e - s
+        if t_speech <= accum + dur:
+            return s + (t_speech - accum)
+        accum += dur
+    return segments[-1][1] if segments else 0.0
+
+
+def split_quote_proportionally(quote: str, segments: list, words_per_chunk: int = 4) -> list:
     """
-    Split the quote into exactly num_chunks balanced text chunks.
-    Splitting logic:
-      1. First split on sentence-ending punctuation (. ! ?)
-      2. If we have more sentences than chunks → merge short ones
-      3. If we have fewer sentences than chunks → break long sentences in half
-      4. Final formatting: wrap chunks > 5 words into 2-line blocks
+    Distribute words proportionally across the detected speech segments based on character count.
+    Returns: list of (t_start, t_end, chunk_text)
     """
-    # Step 1: sentence-split
-    raw = re.split(r"(?<=[.!?])\s+", quote.strip())
-    raw = [r.strip() for r in raw if r.strip()]
+    words = quote.split()
+    total_chars = sum(len(w) for w in words)
+    total_speech_time = sum(e - s for s, e in segments) if segments else 0.0
 
-    # Step 2: merge down to num_chunks if we have too many
-    while len(raw) > num_chunks and len(raw) > 1:
-        # Merge the two shortest adjacent sentences
-        lengths = [len(s.split()) for s in raw]
-        idx = lengths.index(min(lengths))
-        if idx < len(raw) - 1:
-            raw[idx] = raw[idx] + " " + raw[idx + 1]
-            del raw[idx + 1]
-        else:
-            raw[idx - 1] = raw[idx - 1] + " " + raw[idx]
-            del raw[idx]
+    word_timings = []
+    current_speech_time = 0.0
 
-    # Step 3: expand up to num_chunks by breaking long sentences
-    while len(raw) < num_chunks:
-        # Find the longest sentence and break it in half
-        lengths = [len(s.split()) for s in raw]
-        idx     = lengths.index(max(lengths))
-        words   = raw[idx].split()
-        if len(words) < 2:
-            break
-        mid      = len(words) // 2
-        raw[idx] = " ".join(words[:mid])
-        raw.insert(idx + 1, " ".join(words[mid:]))
+    # 1. Map every word to a start/end time in the real audio
+    for word in words:
+        char_len = len(word)
+        ratio = char_len / total_chars if total_chars > 0 else 0
+        word_duration = ratio * total_speech_time
+        
+        start_t = map_time_to_real_audio(current_speech_time, segments)
+        current_speech_time += word_duration
+        end_t = map_time_to_real_audio(current_speech_time, segments)
+        
+        word_timings.append({"word": word, "start": start_t, "end": end_t})
 
-    # Step 4: Format into 2-line blocks where needed
-    formatted = []
-    for chunk in raw:
-        words = chunk.split()
-        if len(words) > 5:
-            mid   = (len(words) + 1) // 2
-            block = " ".join(words[:mid]) + "\n" + " ".join(words[mid:])
-        else:
-            block = chunk
-        formatted.append(block)
+    # 2. Group words into chunks
+    timings = []
+    for i in range(0, len(word_timings), words_per_chunk):
+        chunk_words = word_timings[i : i + words_per_chunk]
+        chunk_str = " ".join(cw["word"] for cw in chunk_words)
+        
+        # Determine chunk boundaries
+        t_start = chunk_words[0]["start"]
+        t_end   = chunk_words[-1]["end"]
+        timings.append((t_start, t_end, chunk_str))
 
-    return formatted
+    return timings
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -414,19 +412,21 @@ def process_video(video_filename: str) -> None:
         step        = total / num_chunks
         segments    = [(i * step, (i + 1) * step) for i in range(num_chunks)]
 
-    # ── Split quote → chunks (one per speech segment) ────────────────────────
-    chunks = split_quote_into_chunks(quote, num_chunks)
+    # ── Map text perfectly to speech timestamps ──────────────────────────────
+    raw_timings = split_quote_proportionally(quote, segments, words_per_chunk=4)
 
-    # ── Build timed subtitle list ─────────────────────────────────────────────
+    # ── Build final timed subtitle list (apply voice delay) ───────────────────
+    # We must add 0.20s because trim.py applies `adelay=200|200` to the voice!
     # Pad each subtitle: start 40 ms early, end 80 ms late → feels snappy
-    PAD_START = 0.04
-    PAD_END   = 0.08
+    VOICE_DELAY = 0.20
+    PAD_START   = 0.04
+    PAD_END     = 0.08
 
     timings = []
-    for (seg_start, seg_end), chunk in zip(segments, chunks):
-        t_start = max(0.0, seg_start - PAD_START)
-        t_end   = seg_end + PAD_END
-        timings.append((t_start, t_end, chunk))
+    for t_start, t_end, chunk in raw_timings:
+        final_start = max(0.0, t_start + VOICE_DELAY - PAD_START)
+        final_end   = t_end + VOICE_DELAY + PAD_END
+        timings.append((final_start, final_end, chunk))
 
     # ── Generate ASS + burn ───────────────────────────────────────────────────
     generate_ass_file(timings, temp_ass)

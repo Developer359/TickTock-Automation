@@ -1,30 +1,3 @@
-"""
-metadata.py  ─  Generates viral TikTok & Instagram titles + tags for every
-                quote using Gemini 3.1, saves results to metadata.json, then
-                inserts each row into the Supabase public."SocialMedia-Automation"
-                table with status = 'pending'.
-
-Structure saved per entry
-─────────────────────────
-{
-  "query_name"  : "The Wake-Up Call",
-  "tiktok" : {
-      "title"  : "...",
-      "tags"   : "#tag1 #tag2 ... #tag10"   // 6-10 tags, space-separated text
-  },
-  "instagram" : {
-      "title"  : "...",
-      "tags"   : "#tag1 ... #tag10"
-  }
-}
-
-Supabase table: SocialMedia-Automation
-────────────────────────────────────────
-  id (auto), title (text), query_name (text), tags (text),
-  platform (text), status (text), created_at (auto)
-  Two rows inserted per quote: one for TikTok, one for Instagram.
-"""
-
 import os
 import sys
 import json

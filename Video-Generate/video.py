@@ -31,27 +31,13 @@ def get_all_videos(folder: str) -> list[str]:
     return sorted(set(videos))
 
 
-def pick_strict_random(all_videos: list[str], used_videos: list[str]) -> tuple[str, list[str]]:
+def pick_random_video(all_videos: list[str]) -> str:
     """
-    Pick one video that has NOT been used yet.
-    If every video has been used, reset the used list and start a fresh cycle.
-    Returns (selected_path, updated_used_list).
+    Pick one random video from all available videos.
+    Returns the selected path (normalised to forward-slash).
     """
-    # Normalise all paths to forward-slash for consistent comparison
-    all_norm  = [v.replace("\\", "/") for v in all_videos]
-    used_norm = [v.replace("\\", "/") for v in used_videos]
-
-    available = [v for v in all_norm if v not in used_norm]
-
-    if not available:
-        # All videos used — reset cycle
-        print("  [INFO] All videos used. Resetting rotation.")
-        used_norm = []
-        available = all_norm
-
-    selected = random.choice(available)
-    used_norm.append(selected)
-    return selected, used_norm
+    all_norm = [v.replace("\\", "/") for v in all_videos]
+    return random.choice(all_norm)
 
 
 def load_json(path: str) -> dict:
@@ -95,14 +81,12 @@ def attach_videos() -> None:
         # ── 2. Load the Eddit-data JSON (may already have quote/voice data) ─
         data = load_json(json_path)
 
-        # ── 3. Strict-random selection ─────────────────────────────────────
-        used_videos = data.get("used_videos", [])
-        selected, updated_used = pick_strict_random(all_videos, used_videos)
+        # ── 3. Random selection ────────────────────────────────────────────
+        selected = pick_random_video(all_videos)
 
         title = os.path.splitext(os.path.basename(selected))[0]
 
         # ── 4. Write back ──────────────────────────────────────────────────
-        data["used_videos"] = updated_used
         data["bg_video"] = {
             "title":     title,
             "file_path": selected   # already normalised to forward-slash
@@ -110,10 +94,8 @@ def attach_videos() -> None:
 
         save_json(json_path, data)
 
-        remaining = len(all_videos) - len(updated_used)
         print(f"[{folder_name}] Selected : {title}")
         print(f"           JSON     : {json_filename}")
-        print(f"           Remaining: {remaining} video(s) before next reset")
         print()
 
 

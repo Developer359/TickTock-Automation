@@ -31,27 +31,13 @@ def get_all_music(folder: str) -> list[str]:
     return sorted(set(tracks))
 
 
-def pick_strict_random(all_tracks: list[str], used_tracks: list[str]) -> tuple[str, list[str]]:
+def pick_random_track(all_tracks: list[str]) -> str:
     """
-    Pick one track that has NOT been used yet.
-    If every track has been used, reset the used list and start a fresh cycle.
-    Returns (selected_path, updated_used_list).
+    Pick one random track from all available tracks.
+    Returns the selected path (normalised to forward-slash).
     """
-    # Normalise all paths to forward-slash for consistent comparison
-    all_norm  = [t.replace("\\", "/") for t in all_tracks]
-    used_norm = [t.replace("\\", "/") for t in used_tracks]
-
-    available = [t for t in all_norm if t not in used_norm]
-
-    if not available:
-        # All tracks used — reset cycle
-        print("  [INFO] All music tracks used. Resetting rotation.")
-        used_norm = []
-        available = all_norm
-
-    selected = random.choice(available)
-    used_norm.append(selected)
-    return selected, used_norm
+    all_norm = [t.replace("\\", "/") for t in all_tracks]
+    return random.choice(all_norm)
 
 
 def load_json(path: str) -> dict:
@@ -95,14 +81,12 @@ def attach_music() -> None:
         # ── 2. Load the Eddit-data JSON (may already have video/quote data) ─
         data = load_json(json_path)
 
-        # ── 3. Strict-random selection ─────────────────────────────────────
-        used_tracks = data.get("used_music", [])
-        selected, updated_used = pick_strict_random(all_tracks, used_tracks)
+        # ── 3. Random selection ────────────────────────────────────────────
+        selected = pick_random_track(all_tracks)
 
         title = os.path.splitext(os.path.basename(selected))[0]
 
         # ── 4. Write back ──────────────────────────────────────────────────
-        data["used_music"] = updated_used
         data["bg_music"] = {
             "title":     title,
             "file_path": selected   # already normalised to forward-slash
@@ -110,10 +94,8 @@ def attach_music() -> None:
 
         save_json(json_path, data)
 
-        remaining = len(all_tracks) - len(updated_used)
         print(f"[{folder_name}] Selected : {title}")
         print(f"           JSON     : {json_filename}")
-        print(f"           Remaining: {remaining} track(s) before next reset")
         print()
 
 

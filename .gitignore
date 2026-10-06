@@ -5,7 +5,12 @@
 Video-Generate/video-content.json
 *.json
 
-# Ignore generated final and output and data directories
-/Final-Video/
-/Output/
-/Eddit-data/
+# Ignore files inside Final-Video, Output, and Eddit-data except .gitkeep
+Final-Video/*
+!Final-Video/.gitkeep
+
+Output/*
+!Output/.gitkeep
+
+Eddit-data/*
+!Eddit-data/.gitkeep

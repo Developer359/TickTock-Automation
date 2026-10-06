@@ -1,11 +1,12 @@
 """
 main-video-data.py
 ──────────────────
-Pipeline orchestrator — runs the three data-generation steps in order:
+Pipeline orchestrator — runs the four data-generation steps in order:
 
   1. quotes.py  →  generate 3 motivational quotes & save to Eddit-data JSON files
   2. voice.py   →  generate voiceovers & save audio paths into Eddit-data JSON files
   3. video.py   →  pick a strict-random background video per category & save to Eddit-data JSON files
+  4. music.py   →  pick a strict-random background music per category & save to Eddit-data JSON files
 
 Stop immediately if any step raises an exception.
 """
@@ -20,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import quotes as quotes_mod
 import voice  as voice_mod
 import video  as video_mod
+import music  as music_mod
 
 
 def separator(title: str) -> None:
@@ -57,10 +59,16 @@ def main() -> None:
         print("[*] Attaching background videos (strict random per category)...\n")
         video_mod.attach_videos()
 
+    # ── Step 4: Pick background music ────────────────────────────────────
+    def step_music():
+        print("[*] Attaching background music (strict random per category)...\n")
+        music_mod.attach_music()
+
     steps = [
-        (1, "Generate Quotes  →  Eddit-data JSON",        step_quotes),
-        (2, "Generate Voiceovers  →  Eddit-data JSON",    step_voice),
+        (1, "Generate Quotes  →  Eddit-data JSON",          step_quotes),
+        (2, "Generate Voiceovers  →  Eddit-data JSON",      step_voice),
         (3, "Select Background Videos  →  Eddit-data JSON", step_video),
+        (4, "Select Background Music   →  Eddit-data JSON", step_music),
     ]
 
     for number, title, fn in steps:
@@ -72,7 +80,7 @@ def main() -> None:
             sys.exit(1)
 
     print("╔══════════════════════════════════════════════════════════╗")
-    print("║           ✓  All 3 steps completed successfully!         ║")
+    print("║           ✓  All 4 steps completed successfully!         ║")
     print("╚══════════════════════════════════════════════════════════╝\n")
 
 

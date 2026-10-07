@@ -166,7 +166,7 @@ def post_to_buffer(title: str, tags: str, video_url: str) -> bool:
             "text":           caption,
             "channelId":      BUFFER_CHANNEL_ID,
             "schedulingType": "automatic",
-            "mode":           "addToQueue",
+            "mode":           "shareNow",
             "metadata": {
                 "instagram": {
                     "type": "reel",

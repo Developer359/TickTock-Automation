@@ -61,30 +61,129 @@ TickTock-Automation/
 ## ⚙️ Setup & Installation
 
 ### 1. Prerequisites
-- **Python 3.10+**: Ensure Python is installed on your system.
-- **FFmpeg**: Required for all underlying video and audio processing. This must be installed and properly added to your system's `PATH` variable.
 
-### 2. Environment Variables (.env)
-Create a `.env` file in the root directory of the project and populate it with your specific API credentials:
+Before running anything, make sure these are installed on your system:
 
-```env
-# Supabase Configuration
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_KEY=your_supabase_anon_or_service_key
+| Requirement | Version | Why it's needed |
+|---|---|---|
+| **Python** | 3.10 or higher | The entire project is written in Python |
+| **FFmpeg** | Latest stable | Core video/audio processing for trim, mix, and subtitle burn-in |
+| **pip** | Latest | For installing Python packages |
 
-# Buffer Configuration for Social Posting
-BUFFER_API_KEY=your_buffer_personal_access_token
-BUFFER_CHANNEL_ID_Instagram=your_instagram_channel_id
-```
+> **FFmpeg Note**: FFmpeg does NOT need to be installed separately. The project uses `imageio-ffmpeg` which bundles its own FFmpeg binary automatically. You do not need to add anything to your system PATH.
 
-### 3. Install Dependencies
-Clone the repository, navigate to the folder, and install the required Python libraries:
+---
+
+### 2. Clone the Repository
 
 ```bash
 git clone <your-repo-url>
 cd TickTock-Automation
+```
+
+---
+
+### 3. Install Python Dependencies
+
+Install all required libraries with a single command:
+
+```bash
 pip install -r requirements.txt
 ```
+
+Below is every library the project uses and exactly what each one does:
+
+| Library | Used In | What It Does |
+|---|---|---|
+| `python-dotenv` | All scripts | Loads API keys and credentials from the `.env` file securely |
+| `requests` | `voice.py` | Sends HTTP requests to the Fish Audio TTS API to generate MP3 voiceovers |
+| `google-genai` | `quotes.py`, `metadata.py` | Official Google Gemini SDK — used to generate motivational quotes and viral titles/tags |
+| `pydantic` | `quotes.py`, `metadata.py` | Enforces strict structured JSON output schema from Gemini responses |
+| `imageio-ffmpeg` | `trim.py`, `subtitle.py` | Bundles its own FFmpeg binary — used for video trimming, audio mixing, and subtitle burn-in via subprocess |
+| `moviepy` | `trim.py` | Used to get accurate audio duration from the voiceover MP3 file |
+
+To install them individually if needed:
+
+```bash
+pip install python-dotenv
+pip install requests
+pip install google-genai
+pip install pydantic
+pip install imageio-ffmpeg
+pip install moviepy
+```
+
+---
+
+### 4. Environment Variables (`.env` file)
+
+Create a file called `.env` in the **root of the project** (same folder as `main.py`). This file holds all your private API keys. It is already listed in `.gitignore` so it will **never be pushed to GitHub**.
+
+```env
+# ── Google Gemini API ──────────────────────────────────────────
+# Used by: quotes.py, metadata.py
+# Get it from: https://aistudio.google.com/app/apikey
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# ── Fish Audio TTS API ─────────────────────────────────────────
+# Used by: voice.py
+# Get it from: https://fish.audio  →  Dashboard → API Keys
+# The script uses model: s2.1-pro-free
+# Voice model used: "Commanding Male Motivator" (Reference ID is hardcoded in voice.py)
+FISH_API_KEY=your_fish_audio_api_key_here
+
+# ── Supabase ───────────────────────────────────────────────────
+# Used by: metadata.py, post_instagram.py, post_tiktok.py
+# Get it from: https://supabase.com  →  Project Settings → API
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_KEY=your_supabase_anon_or_service_key_here
+
+# ── Buffer API (Social Media Scheduler) ───────────────────────
+# Used by: post_instagram.py, post_tiktok.py
+# Get it from: https://buffer.com  →  Account Settings → API Access
+BUFFER_API_KEY=your_buffer_personal_access_token_here
+
+# Buffer Channel IDs — found in your Buffer channel settings
+BUFFER_CHANNEL_ID_Ticktock=your_tiktok_channel_id_here
+BUFFER_CHANNEL_ID_Instagram=your_instagram_channel_id_here
+```
+
+> **Important**: Each key is used by a specific script. If a key is missing, the script that needs it will print a clear error message and exit. You only need the keys for the scripts you plan to run.
+
+---
+
+### 5. Prepare Your Local Video & Music Library
+
+The pipeline picks background videos and music automatically at random from local folders. You must manually populate these folders before running `main.py`:
+
+```text
+Video-Data/
+├── Videos/
+│   ├── Gym/          ← Place MP4/MOV/MKV background videos for "The Wake-Up Call" category here
+│   ├── Mindset/      ← Background videos for "Mindset & Psychology" category
+│   └── Hardwork/     ← Background videos for "Hardwork & Self-Belief" category
+└── Music/
+    ├── Gym/          ← Background music tracks (MP3/WAV/M4A) for Gym videos
+    ├── Mindset/      ← Music tracks for Mindset videos
+    └── Hardwork/     ← Music tracks for Hardwork videos
+```
+
+Each subfolder must contain **at least 1 file**. The script will randomly pick one from each folder every run so your content stays fresh and varied.
+
+---
+
+### 6. Set Up Supabase Table
+
+The metadata and posting scripts write to and read from a Supabase PostgreSQL table called `SocialMedia-Automation`. Create it in your Supabase project with these columns:
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `int8` | Primary key, auto-increment |
+| `query_name` | `text` | e.g. "The Wake-Up Call" |
+| `title` | `text` | Generated viral title |
+| `tags` | `text` | Space-separated hashtag string |
+| `platform` | `text` | Either `"Tiktok"` or `"Instagram"` |
+| `status` | `text` | Starts as `"pending"`, changes to `"posted"` after publishing |
 
 ---
 

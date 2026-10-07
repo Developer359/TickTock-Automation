@@ -29,7 +29,7 @@
 - **Data Generation**: Automatically creates scripts/quotes, generates high-quality text-to-speech (TTS) voiceovers, fetches relevant background footage, and overlays background music.
 - **Advanced Video Editing**: Programmatically trims clips to the perfect length, syncs audio tracks, and burns perfectly timed, dynamic subtitles into the video for maximum viewer retention.
 - **Cloud Database & Storage**: Deeply integrated with Supabase to store comprehensive metadata (viral titles, trending tags, query names, posting statuses) and securely hosts the final MP4 video files in cloud storage buckets.
-- **Multi-Platform Posting**: Automatically schedules and publishes the finalized short-form videos directly to Instagram via the Buffer GraphQL API.
+- **Multi-Platform Posting**: Automatically schedules and publishes the finalized short-form videos directly to TikTok via the Buffer GraphQL API.
 - **CI/CD Scheduling**: Utilizes GitHub Actions to execute the posting scripts on a strict, defined schedule (e.g., daily), ensuring consistent content delivery.
 
 ---
@@ -48,8 +48,8 @@ TickTock-Automation/
 ├── Video-Store/               # Moves and organizes finalized videos for uploading
 │   └── store_videos.py        # Stage 3 execution script
 ├── Video-Post/                # Scripts to publish videos to social media
-│   └── Instagram-post/
-│       └── post_instagram.py  # Buffer posting script
+│   └── Ticktock-Post/
+│       └── post_tiktok.py     # Buffer posting script
 ├── Remove-Data/               # Utilities to clean up temporary/intermediate files after generation
 │   └── remove.py
 ├── main.py                    # The master orchestrator script that runs the entire pipeline
@@ -134,19 +134,18 @@ GEMINI_API_KEY=your_gemini_api_key_here
 FISH_API_KEY=your_fish_audio_api_key_here
 
 # ── Supabase ───────────────────────────────────────────────────
-# Used by: metadata.py, post_instagram.py, post_tiktok.py
+# Used by: metadata.py, post_tiktok.py
 # Get it from: https://supabase.com  →  Project Settings → API
 SUPABASE_URL=https://your-project-id.supabase.co
 SUPABASE_KEY=your_supabase_anon_or_service_key_here
 
 # ── Buffer API (Social Media Scheduler) ───────────────────────
-# Used by: post_instagram.py, post_tiktok.py
+# Used by: post_tiktok.py
 # Get it from: https://buffer.com  →  Account Settings → API Access
 BUFFER_API_KEY=your_buffer_personal_access_token_here
 
 # Buffer Channel IDs — found in your Buffer channel settings
 BUFFER_CHANNEL_ID_Ticktock=your_tiktok_channel_id_here
-BUFFER_CHANNEL_ID_Instagram=your_instagram_channel_id_here
 ```
 
 > **Important**: Each key is used by a specific script. If a key is missing, the script that needs it will print a clear error message and exit. You only need the keys for the scripts you plan to run.
@@ -183,7 +182,7 @@ The metadata and posting scripts write to and read from a Supabase PostgreSQL ta
 | `query_name` | `text` | e.g. "The Wake-Up Call" |
 | `title` | `text` | Generated viral title |
 | `tags` | `text` | Space-separated hashtag string |
-| `platform` | `text` | Either `"Tiktok"` or `"Instagram"` |
+| `platform` | `text` | `"Tiktok"` |
 | `status` | `text` | Starts as `"pending"`, changes to `"posted"` after publishing |
 
 ---
@@ -223,12 +222,12 @@ The system operates as **two independent pipelines** triggered manually or via G
          [Final Video in Final-Video/ & Row pending in Supabase]
 ```
 
-### Pipeline 2 — Automated Social Media Posting (`python Video-Post/Instagram-post/post_instagram.py`)
+### Pipeline 2 — Automated Social Media Posting (`python Video-Post/Ticktock-Post/post_tiktok.py`)
 
 ```text
     ┌────────────────────────────────────────────────────────────┐
-    │                 POSTING PIPELINE (Instagram)               │
-    │         Video-Post/Instagram-post/post_instagram.py        │
+    │                 POSTING PIPELINE (TikTok)                  │
+    │         Video-Post/Ticktock-Post/post_tiktok.py            │
     └─────────────────────────────┬──────────────────────────────┘
                                   │
     ┌─────────────────────────────▼──────────────────────────────┐
@@ -290,10 +289,10 @@ python main.py
 *(This will execute Stages 1 through 4 sequentially, displaying a rich terminal output with exact timings, and ultimately output a final ready-to-post video.)*
 
 ### 2. Manual Posting
-If you wish to manually trigger the publishing of the next available `pending` video in your database to Instagram:
+If you wish to manually trigger the publishing of the next available `pending` video in your database to TikTok:
 
 ```bash
-python Video-Post/Instagram-post/post_instagram.py
+python Video-Post/Ticktock-Post/post_tiktok.py
 ```
 *(This script will read from Supabase, send the GraphQL request to Buffer, and update your database records accordingly.)*
 

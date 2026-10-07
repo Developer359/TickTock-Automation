@@ -63,9 +63,9 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
         # Scale and crop the video to exactly 1080x1920 (9:16) for TikTok
         "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[vout]; "
         # Voiceover: delay 200ms, keep full volume
-        "[1:a] adelay=200|200, volume=1.0 [voice]; "
+        "[1:a] adelay=200|200, volume=2.0 [voice]; "
         # Music: duck to 10% volume
-        "[2:a] volume=0.10 [music]; "
+        "[2:a] volume=0.13 [music]; "
         # Mix them together — normalize=0 prevents ffmpeg from halving volume
         "[voice][music] amix=inputs=2:duration=longest:normalize=0 [aout]"
     )

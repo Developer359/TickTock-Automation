@@ -55,35 +55,31 @@ class PlatformMeta(BaseModel):
 class QuoteMeta(BaseModel):
     query_name: str = Field(description="The quote category name, exactly as given.")
     tiktok: PlatformMeta
-    instagram: PlatformMeta
 
 
 # ── System prompt ──────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """
-You are a viral social-media growth expert specialising in TikTok and Instagram
+You are a viral social-media growth expert specialising in TikTok
 for motivational / self-improvement content.
 
 Your task: given a quote category name and the actual quote, generate ONE set of
-metadata optimised for MAXIMUM viral reach on each platform.
+metadata optimised for MAXIMUM viral reach on the platform.
 
 Rules
 ─────
 1. TITLES  
    • TikTok  : short, punchy, hook-driven (emoji OK). Max 100 chars.  
-   • Instagram: slightly longer, story-driven, SEO-rich. Max 100 chars.  
-   • Both must sound natural and NOT like clickbait.  
+   • Must sound natural and NOT like clickbait.  
    • Start with a power verb or emotional hook word.
 
 2. TAGS (hashtags)  
    • Return 6–10 hashtag strings starting with '#'.  
    • Mix: 2-3 MEGA tags (>10 M posts), 2-3 MID tags (1-10 M), 1-3 NICHE tags.  
    • TikTok  : prioritise trending audio / challenge tags where relevant.  
-   • Instagram: prioritise community + niche discovery tags.  
-   • NEVER duplicate tags between platforms.
 
 3. SEO  
    • Embed the main keyword (e.g. "motivation", "mindset", "hardwork") naturally  
-     in both titles.  
+     in the title.  
    • Tags must match what real users search for RIGHT NOW in 2025-2026.
 
 Output: strict JSON matching the schema. No extra text.
@@ -105,11 +101,11 @@ def load_quote(json_path: str) -> str:
 
 
 def generate_metadata_for(query_name: str, quote: str) -> dict | None:
-    """Call Gemini 3.1 to generate TikTok + Instagram metadata for one quote."""
+    """Call Gemini 3.1 to generate TikTok metadata for one quote."""
     user_prompt = (
         f'Category: "{query_name}"\n'
         f'Quote: "{quote}"\n\n'
-        "Generate viral metadata for TikTok AND Instagram as per the schema."
+        "Generate viral metadata for TikTok as per the schema."
     )
 
     try:
@@ -158,7 +154,7 @@ def _supabase_request(method: str, path: str, payload: dict | list | None = None
 
 def push_to_supabase(all_metadata: list[dict]) -> None:
     """
-    Insert two rows per quote (TikTok + Instagram) into SocialMedia-Automation.
+    Insert one row per quote (TikTok) into SocialMedia-Automation.
     Columns: query_name, title, tags (TEXT), platform (TEXT), status='pending'.
     """
     table = "SocialMedia-Automation"
@@ -166,7 +162,7 @@ def push_to_supabase(all_metadata: list[dict]) -> None:
 
     for entry in all_metadata:
         query_name = entry.get("query_name", "")
-        for platform in ("tiktok", "instagram"):
+        for platform in ("tiktok",):
             meta = entry.get(platform, {})
             # tags is TEXT in Supabase — join list into space-separated string
             raw_tags = meta.get("tags", [])
@@ -175,7 +171,7 @@ def push_to_supabase(all_metadata: list[dict]) -> None:
                 "query_name": query_name,
                 "title":      meta.get("title", ""),
                 "tags":       tags_str,
-                "platform":   platform.capitalize(),   # 'Tiktok' or 'Instagram'
+                "platform":   platform.capitalize(),   # 'Tiktok'
                 "status":     "pending",
             })
 
@@ -220,7 +216,7 @@ def main() -> None:
         all_metadata.append(meta)
 
         # Pretty-print results
-        for platform in ("tiktok", "instagram"):
+        for platform in ("tiktok",):
             pm = meta.get(platform, {})
             print(f"     [{platform.upper()}]")
             print(f"       Title : {pm.get('title', '')}")

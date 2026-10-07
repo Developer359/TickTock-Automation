@@ -80,6 +80,8 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
         "-i", music_path,
         # Filter graph for audio mixing
         "-filter_complex", filter_complex,
+        # Video filter to ensure standard TikTok resolution (1080x1920)
+        "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1",
         # Map: video from input 0, audio from filter output
         "-map", "0:v",
         "-map", "[aout]",

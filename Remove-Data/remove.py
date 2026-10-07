@@ -82,37 +82,74 @@ def clean_storage_bucket(bucket_name: str, prefix: str = ""):
     else:
         print(f"  ❌ Failed to delete files [{del_res['status']}]: {del_res['body']}")
 
-def clean_table(table_name: str):
-    print(f"\n🗑️  Cleaning Table: '{table_name}'")
-    
-    # Try calling the custom RPC first so it resets the ID sequence!
-    print("  ... attempting to TRUNCATE (to reset ID index to 0)...")
+def reset_id_sequence(table_name: str) -> bool:
+    """
+    Try to reset the auto-increment ID sequence back to 1 after a DELETE.
+    Uses the Supabase RPC endpoint for the custom truncate function.
+    Returns True if sequence was successfully reset.
+    """
+    # ── Attempt 1: call the pre-created truncate RPC ───────────────────────────
     rpc_res = _supabase_req("POST", "/rest/v1/rpc/truncate_social_media_automation")
-    
     if rpc_res["status"] in (200, 201, 204):
-        print(f"  ✅ Table truncated successfully. ID index is fresh from 0!")
+        print("  ✅  ID sequence reset to 1 via TRUNCATE RPC.")
+        return True
+
+    # ── Attempt 2: try a generic reset_sequence RPC ────────────────────────────
+    rpc_res2 = _supabase_req(
+        "POST",
+        "/rest/v1/rpc/reset_table_sequence",
+        {"table_name": table_name}
+    )
+    if rpc_res2["status"] in (200, 201, 204):
+        print("  ✅  ID sequence reset to 1 via reset_sequence RPC.")
+        return True
+
+    return False
+
+
+def clean_table(table_name: str):
+    print(f"\n\U0001f5d1\ufe0f  Cleaning Table: '{table_name}'")
+
+    # ── Strategy 1: TRUNCATE + RESTART IDENTITY via RPC ───────────────────────
+    print("  ... attempting TRUNCATE (resets ID to 1) ...")
+    rpc_res = _supabase_req("POST", "/rest/v1/rpc/truncate_social_media_automation")
+
+    if rpc_res["status"] in (200, 201, 204):
+        print("  ✅  Table truncated. ID sequence restarted from 1!")
         return
-        
-    print(f"  ⚠️  RPC failed [{rpc_res['status']}]. Falling back to standard DELETE.")
-    
-    # Fallback: just delete rows
+
+    print(f"  ⚠️   TRUNCATE RPC not found [{rpc_res['status']}] — falling back to DELETE ...")
+
+    # ── Strategy 2: DELETE all rows ────────────────────────────────────────────
     del_res = _supabase_req("DELETE", f"/rest/v1/{table_name}?id=gt.0")
-    if del_res["status"] in (200, 201, 204):
-        print(f"  ✅ Successfully deleted all rows.")
-        print("\n  ========================================================")
-        print("  🚨 IMPORTANT NOTE ON INDEX (ID) RESET 🚨")
-        print("  The standard API deletes data, but the ID continues from where it left off.")
-        print("  To make the ID start from 0 every time, run this SQL in your Supabase Dashboard:")
-        print("  ")
-        print("  CREATE OR REPLACE FUNCTION truncate_social_media_automation()")
-        print("  RETURNS void LANGUAGE sql AS $$")
-        print(f"    TRUNCATE TABLE \"{table_name}\" RESTART IDENTITY;")
-        print("  $$;")
-        print("  ")
-        print("  Once you run that, this script will automatically reset the index to 0 forever!")
-        print("  ========================================================\n")
-    else:
-        print(f"  ❌ Failed to delete rows [{del_res['status']}]: {del_res['body']}")
+
+    if del_res["status"] not in (200, 201, 204):
+        print(f"  ❌  Failed to delete rows [{del_res['status']}]: {del_res['body']}")
+        return
+
+    print("  ✅  All rows deleted.")
+
+    # ── Strategy 3: Reset sequence after DELETE ────────────────────────────────
+    seq_reset = reset_id_sequence(table_name)
+
+    if not seq_reset:
+        # ── One-time setup instructions ────────────────────────────────────────
+        print()
+        print("  ╔══════════════════════════════════════════════════════════╗")
+        print("  ║   ⚠️  ID SEQUENCE NOT RESET — ONE-TIME SETUP NEEDED      ║")
+        print("  ╠══════════════════════════════════════════════════════════╣")
+        print("  ║  Run this SQL ONCE in Supabase → SQL Editor:            ║")
+        print("  ║                                                          ║")
+        print("  ║  CREATE OR REPLACE FUNCTION                              ║")
+        print("  ║    truncate_social_media_automation()                    ║")
+        print("  ║  RETURNS void LANGUAGE sql AS $$                         ║")
+        print(f"  ║    TRUNCATE TABLE \"{table_name}\" RESTART IDENTITY;  ║")
+        print("  ║  $$;                                                     ║")
+        print("  ║                                                          ║")
+        print("  ║  After that, this script will ALWAYS reset IDs to 1!    ║")
+        print("  ╚══════════════════════════════════════════════════════════╝")
+        print()
+
 
 def main():
     print("╔══════════════════════════════════════════════════════════╗")

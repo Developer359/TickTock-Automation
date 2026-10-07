@@ -81,42 +81,47 @@ def fetch_first_pending_tiktok() -> dict | None:
     return row
 
 
-def fetch_first_video_url() -> str | None:
+# ── query_name → video filename mapping ───────────────────────────────────────
+QUERY_VIDEO_MAP = {
+    "The Wake-Up Call":       "gym-video.mp4",
+    "Mindset & Psychology":   "mindset-video.mp4",
+    "Hardwork & Self-Belief": "hardwork-video.mp4",
+}
+
+
+def get_video_url_for(query_name: str) -> str | None:
     """
-    List files under uploads/ in the tiktok-videos bucket and return
-    the public URL of the first one (sorted by created_at ASC).
+    Return the public Supabase Storage URL for the video that matches
+    the given query_name. Falls back to the first real file if the
+    query_name is unknown.
     """
-    print("  \U0001f3ac  Fetching first video from Supabase Storage bucket ...")
-    list_path = f"/storage/v1/object/list/{SUPABASE_BUCKET}"
-    payload   = {
-        "prefix":  "uploads",
-        "limit":   10,
-        "offset":  0,
-        "sortBy":  {"column": "created_at", "order": "asc"}
-    }
-    res = _supabase_req("POST", list_path, payload)
+    # Resolve filename from query_name
+    file_name = QUERY_VIDEO_MAP.get(query_name)
 
-    if res["status"] != 200:
-        print(f"  ❌  Failed to list bucket [{res['status']}]: {res['body']}")
-        return None
+    if file_name:
+        print(f"  \U0001f3ac  Matched query_name '{query_name}' → {file_name}")
+    else:
+        # Fallback: list bucket and take first real file
+        print(f"  ⚠️   Unknown query_name '{query_name}', falling back to first video in bucket ...")
+        list_path = f"/storage/v1/object/list/{SUPABASE_BUCKET}"
+        payload   = {"prefix": "uploads", "limit": 10, "offset": 0,
+                     "sortBy": {"column": "created_at", "order": "asc"}}
+        res = _supabase_req("POST", list_path, payload)
+        if res["status"] != 200:
+            print(f"  ❌  Failed to list bucket [{res['status']}]: {res['body']}")
+            return None
+        real_files = [f for f in res["body"]
+                      if f.get("name") and f["name"] != ".emptyFolderPlaceholder"]
+        if not real_files:
+            print("  ⚠️   Bucket is empty.")
+            return None
+        file_name = real_files[0]["name"]
 
-    files = res["body"]
-    if not files:
-        print("  ⚠️   No videos found in bucket 'uploads/' prefix.")
-        return None
-
-    # Filter out placeholder files
-    real_files = [f for f in files if f.get("name") and f["name"] != ".emptyFolderPlaceholder"]
-    if not real_files:
-        print("  ⚠️   Bucket is empty (only placeholder found).")
-        return None
-
-    file_name    = real_files[0]["name"]
     storage_path = f"uploads/{file_name}"
     public_url   = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{storage_path}"
 
-    print(f"  ✅  First video: {file_name}")
-    print(f"  \U0001f517  URL: {public_url}")
+    print(f"  ✅  Video file : {file_name}")
+    print(f"  \U0001f517  URL       : {public_url}")
     return public_url
 
 
@@ -243,16 +248,18 @@ def main() -> None:
         print("\n  ℹ️   Nothing to post. Exiting.")
         sys.exit(0)
 
-    row_id = row["id"]
-    title  = row.get("title", "")
-    tags   = row.get("tags",  "")
+    row_id     = row["id"]
+    title      = row.get("title", "")
+    tags       = row.get("tags",  "")
+    query_name = row.get("query_name", "")
 
     print(f"\n  \U0001f4cb  Metadata loaded:")
-    print(f"      Title : {title}")
-    print(f"      Tags  : {tags}\n")
+    print(f"      Query  : {query_name}")
+    print(f"      Title  : {title}")
+    print(f"      Tags   : {tags}\n")
 
-    # ── Step 2: Fetch first video URL from Supabase Storage ───────────────────
-    video_url = fetch_first_video_url()
+    # ── Step 2: Get matching video URL from Supabase Storage ──────────────────
+    video_url = get_video_url_for(query_name)
     if not video_url:
         print("\n  ❌  No video available. Exiting without posting.")
         sys.exit(1)

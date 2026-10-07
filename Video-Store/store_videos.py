@@ -1,4 +1,6 @@
 import os
+import sys
+sys.stdout.reconfigure(encoding="utf-8")
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -42,7 +44,7 @@ def upload_final_videos(folder_path: str = os.path.join(PROJECT_ROOT, "Final-Vid
                 response = supabase.storage.from_(bucket_name).upload(
                     path=storage_path,
                     file=f,
-                    file_options={"cache-control": "3600", "upsert": "true"}
+                    file_options={"cache-control": "3600", "upsert": "true", "content-type": "video/mp4"}
                 )
 
             # Get public URL from the bucket

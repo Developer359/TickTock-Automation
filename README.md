@@ -10,6 +10,7 @@
 > **An end-to-end automated pipeline to generate, edit, and post short-form videos (Reels, Shorts, TikToks) entirely on autopilot.**
 
 ---
+<img width="1087" height="505" alt="image" src="https://github.com/user-attachments/assets/78e93e75-7995-4e05-9b17-f3a1eeafd458" />
 
 ## 📑 Table of Contents
 - [🚀 Features](#-features)

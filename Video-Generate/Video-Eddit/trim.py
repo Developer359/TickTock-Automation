@@ -60,6 +60,8 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
 
 
     filter_complex = (
+        # Scale and crop the video to exactly 1080x1920 (9:16) for TikTok
+        "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[vout]; "
         # Voiceover: delay 200ms, keep full volume
         "[1:a] adelay=200|200, volume=1.0 [voice]; "
         # Music: duck to 10% volume
@@ -78,12 +80,10 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
         # Input 2: music, looped infinitely
         "-stream_loop", "-1",
         "-i", music_path,
-        # Filter graph for audio mixing
+        # Filter graph for video scaling/cropping and audio mixing
         "-filter_complex", filter_complex,
-        # Video filter to ensure standard TikTok resolution (1080x1920)
-        "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1",
-        # Map: video from input 0, audio from filter output
-        "-map", "0:v",
+        # Map: video from filter output, audio from filter output
+        "-map", "[vout]",
         "-map", "[aout]",
         # Video encoding
         "-c:v", "libx264",

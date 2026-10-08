@@ -53,7 +53,7 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
         return False
 
     voice_duration  = get_duration(voice_path)
-    target_duration = voice_duration + 1.0
+    target_duration = voice_duration + 2.0
     print(f"  🎙️  Voiceover duration: {voice_duration:.2f}s | Target: {target_duration:.2f}s")
     print(f"  📹  Video : {os.path.basename(video_path)}")
     print(f"  🎵  Music : {os.path.basename(music_path)}")
@@ -64,8 +64,8 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
         "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[vout]; "
         # Voiceover: delay 200ms, keep full volume
         "[1:a] adelay=200|200, volume=2.0 [voice]; "
-        # Music: duck to 10% volume
-        "[2:a] volume=0.13 [music]; "
+        # Music: duck to 13% volume
+        "[2:a] volume=0.15 [music]; "
         # Mix them together — normalize=0 prevents ffmpeg from halving volume
         "[voice][music] amix=inputs=2:duration=longest:normalize=0 [aout]"
     )

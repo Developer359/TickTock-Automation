@@ -66,7 +66,7 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
         "[1:a] adelay=200|200, volume=2.0 [voice]; "
         # Music: duck to 13% volume
         "[2:a] volume=0.15 [music]; "
-        # Mix them together — normalize=0 prevents ffmpeg from halving volume
+        # Mix them together — normalize=0 prevents ffmpeg 
         "[voice][music] amix=inputs=2:duration=longest:normalize=0 [aout]"
     )
 

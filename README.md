@@ -25,7 +25,7 @@
 
 ## 🚀 Features
 
-- **End-to-End Automation**: Handles everything from script generation to final posting without any human intervention required.
+- **End-to-End Automation**: Handles everything from script generation to final posting without any human intervention and maintaniance required.
 - **Data Generation**: Automatically creates scripts/quotes, generates high-quality text-to-speech (TTS) voiceovers, fetches relevant background footage, and overlays background music.
 - **Advanced Video Editing**: Programmatically trims clips to the perfect length, syncs audio tracks, and burns perfectly timed, dynamic subtitles into the video for maximum viewer retention.
 - **Cloud Database & Storage**: Deeply integrated with Supabase to store comprehensive metadata (viral titles, trending tags, query names, posting statuses) and securely hosts the final MP4 video files in cloud storage buckets.

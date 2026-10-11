@@ -140,12 +140,28 @@ def mark_as_posted(row_id: int) -> None:
 # ║              BUFFER  HELPERS                             ║
 # ╚══════════════════════════════════════════════════════════╝
 
+def ensure_fyp_tags(tags: str) -> str:
+    """Guarantee that core FYP and viral hashtags are always present in the TikTok post."""
+    core_fyp = ["#fyp", "#foryou", "#foryoupage", "#viral", "#trending", "#fypシ"]
+    existing = [t.strip() for t in tags.split() if t.strip()]
+    existing_lower = [t.lower() for t in existing]
+
+    missing = [req for req in core_fyp if req.lower() not in existing_lower]
+    if missing:
+        all_tags = missing + existing
+    else:
+        all_tags = existing
+
+    return " ".join(all_tags)
+
+
 def post_to_buffer(title: str, tags: str, video_url: str) -> bool:
     """
     Send a createPost mutation to the Buffer GraphQL API.
-    Caption = title + blank line + tags.
+    Caption = title + blank line + tags (guaranteed with viral FYP tags).
     Returns True on success, False on failure.
     """
+    tags = ensure_fyp_tags(tags)
     caption = f"{title}\n\n{tags}"
 
     mutation = """

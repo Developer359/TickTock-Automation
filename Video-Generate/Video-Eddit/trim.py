@@ -53,7 +53,9 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
         return False
 
     voice_duration  = get_duration(voice_path)
-    target_duration = voice_duration + 2.0
+    # Professional TikTok timing: 200ms intro delay + voiceover + 0.6s outro punch (eliminates dead air)
+    target_duration = round(voice_duration + 0.8, 2)
+    fade_start      = max(0.1, round(target_duration - 0.45, 2))
     print(f"  🎙️  Voiceover duration: {voice_duration:.2f}s | Target: {target_duration:.2f}s")
     print(f"  📹  Video : {os.path.basename(video_path)}")
     print(f"  🎵  Music : {os.path.basename(music_path)}")
@@ -62,12 +64,13 @@ def create_tiktok_edit(voice_path, music_path, video_path, output_file):
     filter_complex = (
         # Scale and crop the video to exactly 1080x1920 (9:16) for TikTok
         "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920[vout]; "
-        # Voiceover: delay 200ms, keep full volume
-        "[1:a] adelay=200|200, volume=2.0 [voice]; "
-        # Music: duck to 13% volume
-        "[2:a] volume=0.18 [music]; "
-        # Mix them together — normalize=0 prevents ffmpeg 
-        "[voice][music] amix=inputs=2:duration=longest:normalize=0 [aout]"
+        # Voiceover: delay 200ms, crisp clear speech without distortion
+        "[1:a] adelay=200|200, volume=1.05 [voice]; "
+        # Music: normalize integrated loudness to -20 LUFS so all tracks are punchy, audible and consistent
+        "[2:a] loudnorm=I=-20:LRA=7:tp=-2 [music]; "
+        # Mix together: 0s dropout transition prevents volume jumps, limiter avoids clipping, smooth fade-out at end
+        f"[voice][music] amix=inputs=2:duration=longest:dropout_transition=0:normalize=0, "
+        f"alimiter=limit=0.95, afade=t=out:st={fade_start:.2f}:d=0.45 [aout]"
     )
 
     cmd = [

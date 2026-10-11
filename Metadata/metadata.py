@@ -39,16 +39,32 @@ CATEGORY_MAP = {
 }
 
 
+# ── Viral FYP Tags guaranteed on every post ──────────────────────────────────
+CORE_FYP_TAGS = [
+    "#fyp",
+    "#foryou",
+    "#foryoupage",
+    "#viral",
+    "#trending",
+    "#fypシ",
+]
+
 # ── Pydantic schemas ───────────────────────────────────────────────────────────
 class PlatformMeta(BaseModel):
-    title: str = Field(
-        description="One viral, trending, SEO-optimised title for the platform (max 100 chars)."
+    hook: str = Field(
+        description="One viral, punchy, curiosity-driven hook title for TikTok (max 85 chars, emoji OK). "
+                    "Start with a power verb, emotional trigger, or harsh truth."
+    )
+    call_to_action: str = Field(
+        description="A high-converting TikTok call-to-action that encourages viewers to SAVE and COMMENT "
+                    "(e.g. '📌 Save this for when you need a reminder | Drop a 🔥 if you agree'). Max 85 chars."
     )
     tags: list[str] = Field(
-        description="Between 6 and 10 hashtag strings (include the # symbol). "
-                    "Mix trending, niche, and broad tags for maximum reach.",
-        min_length=6,
-        max_length=10,
+        description="List of 8 to 12 high-performing viral and SEO hashtags for TikTok, including #fyp, #foryou, "
+                    "#viral, #trending, plus niche tags like #motivation, #mindset, #discipline, #selfimprovement, "
+                    "#success, #motok.",
+        min_length=8,
+        max_length=15,
     )
 
 
@@ -59,28 +75,32 @@ class QuoteMeta(BaseModel):
 
 # ── System prompt ──────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """
-You are a viral social-media growth expert specialising in TikTok
-for motivational / self-improvement content.
+You are a world-class viral TikTok growth expert and SEO specialist for motivational, discipline, and mindset content.
 
-Your task: given a quote category name and the actual quote, generate ONE set of
-metadata optimised for MAXIMUM viral reach on the platform.
+Your task: Given a quote category and the actual quote, generate viral metadata designed to:
+1. Break through TikTok's initial test audience (surpassing 100-200 view plateaus).
+2. Land on the TikTok "For You Page" (FYP) and Rank #1 in TikTok Search (TikTok SEO).
+3. Maximize viewer Saves, Shares, and Comments — the primary ranking signals for TikTok's algorithm.
 
 Rules
 ─────
-1. TITLES  
-   • TikTok  : short, punchy, hook-driven (emoji OK). Max 100 chars.  
-   • Must sound natural and NOT like clickbait.  
-   • Start with a power verb or emotional hook word.
+1. HOOK
+   • Punchy, emotionally provocative, and relatable (max 85 chars).
+   • Uses psychological triggers (urgency, harsh truth, wake-up call, ambition).
+   • Example: "Stop playing small: Your comfort zone is destroying your potential ⚠️"
 
-2. TAGS (hashtags)  
-   • Return 6–10 hashtag strings starting with '#'.  
-   • Mix: 2-3 MEGA tags (>10 M posts), 2-3 MID tags (1-10 M), 1-3 NICHE tags.  
-   • TikTok  : prioritise trending audio / challenge tags where relevant.  
+2. CALL TO ACTION (CTA)
+   • TikTok's algorithm prioritizes SAVES and COMMENTS above all else.
+   • Always include a high-converting action:
+     - Saving the video ("📌 Save this for when you need a reminder")
+     - Commenting ("Drop a 🔥 if you agree", "Comment 'YES' if you claim this")
+     - Following ("Follow for daily discipline 🗿")
 
-3. SEO  
-   • Embed the main keyword (e.g. "motivation", "mindset", "hardwork") naturally  
-     in the title.  
-   • Tags must match what real users search for RIGHT NOW in 2025-2026.
+3. VIRAL HASHTAGS (TAGS)
+   • Every post MUST be optimized for the TikTok For You Page (#fyp, #foryou, #foryoupage, #viral, #trending, #fypシ).
+   • Include top-tier multi-billion view niche hashtags (#motivation, #mindset, #discipline, #success, #selfimprovement).
+   • Include trending aesthetic / subculture tags (#motok, #grindset, #mentality, #mindsetshift).
+   • Every tag must start with '#' and be lowercase.
 
 Output: strict JSON matching the schema. No extra text.
 """
@@ -101,11 +121,11 @@ def load_quote(json_path: str) -> str:
 
 
 def generate_metadata_for(query_name: str, quote: str) -> dict | None:
-    """Call Gemini 3.1 to generate TikTok metadata for one quote."""
+    """Call Gemini 3.1 to generate viral TikTok metadata for one quote."""
     user_prompt = (
         f'Category: "{query_name}"\n'
         f'Quote: "{quote}"\n\n'
-        "Generate viral metadata for TikTok as per the schema."
+        "Generate viral, high-SEO TikTok metadata with hook, CTA, and trending FYP hashtags as per the schema."
     )
 
     try:
@@ -119,7 +139,41 @@ def generate_metadata_for(query_name: str, quote: str) -> dict | None:
                 temperature=0.85,
             ),
         )
-        return json.loads(response.text)
+        parsed = json.loads(response.text)
+
+        # ── Post-process & guarantee viral FYP tags + format caption title ───
+        tt = parsed.get("tiktok", {})
+        hook = tt.get("hook", "").strip()
+        cta  = tt.get("call_to_action", "").strip()
+
+        # Combine Hook + CTA into full title for Buffer / TikTok
+        if hook and cta:
+            formatted_title = f"{hook}\n\n{cta}"
+        elif hook:
+            formatted_title = hook
+        else:
+            formatted_title = tt.get("title", "")
+
+        parsed["tiktok"]["title"] = formatted_title
+
+        # Clean tags from Gemini
+        raw_tags = tt.get("tags", [])
+        clean_tags = []
+        for t in raw_tags:
+            t = t.strip().lower()
+            if not t.startswith("#"):
+                t = f"#{t}"
+            if t not in clean_tags:
+                clean_tags.append(t)
+
+        # Merge with CORE_FYP_TAGS, guaranteeing FYP tags are first
+        final_tags = list(CORE_FYP_TAGS)
+        for t in clean_tags:
+            if t not in final_tags:
+                final_tags.append(t)
+
+        parsed["tiktok"]["tags"] = final_tags[:14]
+        return parsed
     except Exception as exc:
         print(f"  ⚠  Gemini error for '{query_name}': {exc}")
         return None

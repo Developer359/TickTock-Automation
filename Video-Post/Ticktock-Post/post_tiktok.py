@@ -155,17 +155,14 @@ def ensure_fyp_tags(tags: str) -> str:
     return " ".join(all_tags)
 
 
-def post_to_buffer(title: str, tags: str, video_url: str, comment: str = "") -> bool:
+def post_to_buffer(title: str, tags: str, video_url: str) -> bool:
     """
     Send a createPost mutation to the Buffer GraphQL API.
-    Caption = title + motivational comment + tags (guaranteed with viral FYP tags).
+    Caption = title + tags (guaranteed with viral FYP tags).
     Returns True on success, False on failure.
     """
     tags = ensure_fyp_tags(tags)
-    if comment:
-        caption = f"{title}\n\n💬 {comment}\n\n{tags}"
-    else:
-        caption = f"{title}\n\n{tags}"
+    caption = f"{title}\n\n{tags}"
 
     mutation = """
     mutation CreatePost($input: CreatePostInput!) {
@@ -271,13 +268,10 @@ def main() -> None:
     title      = row.get("title", "")
     tags       = row.get("tags",  "")
     query_name = row.get("query_name", "")
-    comment    = row.get("Comment") or row.get("comment", "")
 
     print(f"\n  \U0001f4cb  Metadata loaded:")
     print(f"      Query   : {query_name}")
     print(f"      Title   : {title}")
-    if comment:
-        print(f"      Comment : 💬 {comment}")
     print(f"      Tags    : {tags}\n")
 
     # ── Step 2: Get matching video URL from Supabase Storage ──────────────────
@@ -289,7 +283,7 @@ def main() -> None:
     print()
 
     # ── Step 3: Post to Buffer ─────────────────────────────────────────────────
-    success = post_to_buffer(title, tags, video_url, comment=comment)
+    success = post_to_buffer(title, tags, video_url)
 
     if not success:
         print("\n  ❌  Post failed. Status NOT updated.")

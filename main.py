@@ -14,6 +14,7 @@ VIDEO_STORE      = os.path.join(ROOT_DIR, "Video-Store")
 STORE_VIDEOS     = os.path.join(VIDEO_STORE, "store_videos.py")
 METADATA_DIR     = os.path.join(ROOT_DIR, "Metadata")
 GEN_METADATA     = os.path.join(METADATA_DIR, "metadata.py")
+GEN_COMMENT      = os.path.join(METADATA_DIR, "comment.py")
 
 PYTHON = sys.executable   # same Python interpreter that launched this script
 
@@ -90,6 +91,11 @@ def main() -> None:
             4,
             "Metadata         (viral titles & tags → JSON + Supabase)",
             GEN_METADATA,
+        ),
+        (
+            5,
+            "Viral Comments   (AI engagement comments → Supabase)",
+            GEN_COMMENT,
         ),
     ]
 
